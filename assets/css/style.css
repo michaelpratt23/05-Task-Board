@@ -1,24 +1,37 @@
+/* General body styles */
 body {
   font-family: 'Open Sans', sans-serif;
   font-size: 16px;
 }
 
+/* Swimlane styling */
 .swim-lanes {
   min-height: 60vh;
 }
 
+.lane {
+  position: relative; /* Ensure z-index works properly */
+}
+
+/* Task card styling */
 .task-card {
   margin: 0 auto;
+  z-index: 2; /* Base z-index for cards */
 }
 
 .task-card:hover {
   cursor: grab;
 }
 
-.task-card.due-soon {
-  border-left: 5px solid yellow;
+/* Dragging behavior */
+.task-card.ui-draggable-dragging {
+  z-index: 1000; /* Ensure dragged card is on top */
+  position: relative; /* Required for stacking context */
 }
 
-.task-card.overdue {
-  border-left: 5px solid red;
+/* Swimlane card-body styling */
+.lane .card-body {
+  min-height: 200px; /* Ensure enough height for dropping */
+  position: relative; /* Ensure proper stacking context */
+  overflow: visible; /* Prevent hidden content during drag */
 }

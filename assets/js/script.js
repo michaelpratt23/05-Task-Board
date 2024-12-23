@@ -23,10 +23,15 @@ function createTaskCard(task) {
     </div>
   `);
 
-  if (dayjs(deadline).isBefore(dayjs(), "day")) {
-    taskCard.find(".card-body").addClass("bg-danger text-white");
-  } else if (dayjs(deadline).isSame(dayjs(), "day")) {
-    taskCard.addClass("bg-warning text-white");
+  if (task.deadline && task.status !== "done") {
+    const now = dayjs();
+    const taskDueDate = dayjs(task.deadline, "MM-DD-YYYY");
+    if (now.isSame(taskDueDate, "day")) {
+      taskCard.addClass("bg-warning text-white");
+    } else if (now.isAfter(taskDueDate)) {
+      taskCard.find(".card-body").addClass("bg-danger text-white");
+      taskCard.find(".delete-btn").addClass("border-light");
+    }
   }
 
   return taskCard;
@@ -39,7 +44,8 @@ function renderTaskList() {
   $("#done-cards").empty();
 
   taskList.forEach((task) => {
-    $(`#${task.status}-cards`).append(createTaskCard(task));
+    const taskCard = createTaskCard(task);
+    $(`#${task.status}-cards`).append(taskCard);
   });
 
   $(".task-card").draggable({
@@ -56,7 +62,7 @@ function handleAddTask(event) {
   const title = $("#title").val().trim();
   const description = $("#description").val().trim();
   const deadline = $("#deadline").val();
-  const status = "to-do";
+  const status = "todo";
 
   if (title && description && deadline) {
     const newTask = {
@@ -66,11 +72,16 @@ function handleAddTask(event) {
       deadline,
       status,
     };
+
     taskList.push(newTask);
     localStorage.setItem("tasks", JSON.stringify(taskList));
     localStorage.setItem("nextId", nextId);
 
     $("#formModal").modal("hide");
+    $("#title").val("");
+    $("#description").val("");
+    $("#deadline").val("");
+
     renderTaskList();
   }
 }
@@ -86,20 +97,33 @@ function handleDeleteTask() {
 // Handle dropping a task into a new lane
 function handleDrop(event, ui) {
   const taskId = ui.draggable.data("id");
-  const newStatus = $(this).attr("id").replace("-cards", "");
+  const newStatus = $(this).attr("id");
 
   const taskIndex = taskList.findIndex((task) => task.id === taskId);
   taskList[taskIndex].status = newStatus;
+
   localStorage.setItem("tasks", JSON.stringify(taskList));
   renderTaskList();
 }
 
-// Initialize the app
+// installing
 $(document).ready(function () {
   renderTaskList();
 
+  $("#formModal").on("shown.bs.modal", function () {
+    $("#title").focus();
+  });
+
   $("#addTaskForm").on("submit", handleAddTask);
+
   $(document).on("click", ".delete-btn", handleDeleteTask);
-  $(".lane .card-body").droppable({ accept: ".task-card", drop: handleDrop });
-  $("#deadline").datepicker({ dateFormat: "yy-mm-dd" });
+
+  $(".lane").droppable({
+    accept: ".task-card",
+    drop: handleDrop,
+  });
+
+  $("#deadline").datepicker({
+    dateFormat: "yy-mm-dd",
+  });
 });
